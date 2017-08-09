@@ -65,8 +65,8 @@ def buildTree(data):
 def divideSet(data, columnIndex, value):
 	# Create a function that partitions a row into the left set (true) or the right set (false).
 	splitFunction = None
-	if isinstance(value, int) or isinstance(value, float):
-		splitFunction = lambda row : row[columnIndex] >= value
+	if isNumber(value):
+		splitFunction = lambda row : row[columnIndex] >= float(value)
 	else:
 		splitFunction = lambda row : row[columnIndex] == value
 
