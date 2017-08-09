@@ -1,17 +1,14 @@
+import sys, csv, math
 from PIL import Image, ImageDraw
-import csv
-import math
-import sys
-
 
 
 # The results column in the data.
 ATTRITION_COLUMN_INDEX = 1
 
 
-
-# A node in the decision tree.
+## A node in the decision tree.
 class DecisionTreeNode:
+	## Constructor
 	def __init__(self, columnIndex = -1, value = None, results = None, leftChild = None, rightChild = None):
 		self.columnIndex = columnIndex
 		self.value = value;
@@ -20,8 +17,9 @@ class DecisionTreeNode:
 		self.rightChild = rightChild
 
 
-
-# Recursively constructs the decision tree.
+## Recursively constructs the decision tree.
+# @param data	This is a list of rows containing attributes for a particular employee from the .csv file
+# @return		TO BE POPULATED
 def buildTree(data):
 	if len(data) == 0:
 		return DecisionTreeNode()
@@ -37,6 +35,8 @@ def buildTree(data):
 			if columnIndex != ATTRITION_COLUMN_INDEX:
 				# Partition the data by this column.
 				columnValues = {}
+
+				###WHAT IS THIS DOING?!? It appears to make indexes in columnValues based on the value in the columnIndex of different rows. Then sets these values to 1
 				for row in data:
 					columnValues[row[columnIndex]] = 1
 
@@ -61,7 +61,11 @@ def buildTree(data):
 			return DecisionTreeNode(results = uniqueCounts(data))
 
 
-# Partitions and returns a data set in two.
+## Partitions and returns a data set in two.
+# @param data			TO BE POPULATED
+# @param columnIndex	TO BE POPULATED
+# @param value			TO BE POPULATED
+# @return				TO BE POPULATED
 def divideSet(data, columnIndex, value):
 	# Create a function that partitions a row into the left set (true) or the right set (false).
 	splitFunction = None
@@ -76,7 +80,12 @@ def divideSet(data, columnIndex, value):
 	return (set1, set2)
 
 
-# Draws the current node in the tree.
+## Draws the current node in the tree.
+# @param draw		TO BE POPULATED
+# @param headers	TO BE POPULATED
+# @param tree		TO BE POPULATED
+# @param x			TO BE POPULATED
+# @param y			TO BE POPULATED
 def drawNode(draw, headers, tree, x, y):
 	if tree.results == None:
 		# Get the width of each branch.
@@ -106,7 +115,9 @@ def drawNode(draw, headers, tree, x, y):
 		draw.text((x - 20, y), leafText, (0, 0, 0))
 
 
-# Draws the tree to "DecisionTree.png".
+## Draws the tree to "DecisionTree.png".
+# @param tree		TO BE POPULATED
+# @param headers	TO BE POPULATED
 def drawTree(tree, headers):
 	width = 100 * getWidth(tree)
 	height = 100 * getHeight(tree) + 220
@@ -117,7 +128,9 @@ def drawTree(tree, headers):
 	image.save("DecisionTree.png", "PNG")
 
 
-# Calculates how different outcomes are from each other.
+## Calculates how different outcomes are from each other.
+# @param data	TO BE POPULATED
+# @return		TO BE POPULATED
 def entropy(data):
 	logBase2 = lambda x : math.log(x) / math.log(2)
 	results = uniqueCounts(data)
@@ -129,7 +142,9 @@ def entropy(data):
 	return entropy
 
 
-# Calculates the height (depth) of the tree.
+## Calculates the height (depth) of the tree.
+# @param tree		TO BE POPULATED
+# @return
 def getHeight(tree):
 	if tree.leftChild == None and tree.rightChild == None:
 		return 0
@@ -137,7 +152,9 @@ def getHeight(tree):
 		return max(getHeight(tree.leftChild), getHeight(tree.rightChild)) + 1
 
 
-# Calculates the number of leaves in the tree.
+## Calculates the number of leaves in the tree.
+# @param tree		TO BE POPULATED
+# @return
 def getWidth(tree):
 	if tree.leftChild == None and tree.rightChild == None:
 		return 1
@@ -145,7 +162,9 @@ def getWidth(tree):
 		return getWidth(tree.leftChild) + getWidth(tree.rightChild)
 
 
-# Returns True if x is a number and False otherwise.
+## Returns True if x is a number and False otherwise.
+# @param x		TO BE POPULATED
+# @return
 def isNumber(x):
 	try:
 		float(x)
@@ -154,7 +173,9 @@ def isNumber(x):
 		return False
 
 
-# Loads and returns CSV data from the provided file path.
+## Loads and returns CSV data from the provided file path.
+# @param filePath		TO BE POPULATED
+# @return				TO BE POPULATED
 def loadCSVData(filePath):
 	csvFile = open(filePath, 'rb')
 	reader = csv.reader(csvFile)
@@ -166,7 +187,9 @@ def loadCSVData(filePath):
 	return data[0], data[1:]
 
 
-# Computes how mixed the set is and returns the results.
+## Computes how mixed the set is and returns the results.
+# @param data		TO BE POPULATED
+# @return
 def uniqueCounts(data):
 	results = {}
 	for row in data:
@@ -178,7 +201,7 @@ def uniqueCounts(data):
 
 
 
-# The starting point for this program's execution.
+## The starting point for this program's execution.
 if __name__ == "__main__":
 	if len(sys.argv) != 2:
 		print "Usage: python decisiontree.py <csv file>"
