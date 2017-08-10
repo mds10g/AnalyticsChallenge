@@ -1,4 +1,4 @@
-import sys, csv, math
+import sys, csv, math, random
 from PIL import Image, ImageDraw
 
 
@@ -263,6 +263,34 @@ def uniqueCounts(dataSet):
 		results[attritionValue] += 1
 	return results
 
+
+##This function takes in a data set and splits it into a trainData set and a testData set based
+# @param data				This is the data set
+# @param percentTrain		This is the percentage of the data set to use in the trainData set
+# @return					Returns the training and test data sets
+def splitData(data, percentTrain):
+	numRows = int(float(len(data[0])) * (percentTrain / 100.0))
+	usedIndexList = [-1]
+	trainData = []
+	testData = []
+	index = -1
+
+	for x in range(0, numRows):
+		while index is in usedIndexList:
+			index = random.randint(0,len(data[0])-1)
+
+		usedIndexList.append(index)
+
+		trainData.append(data[index])
+		x += 1
+
+	for x in range(0, len(data[0])):
+		if x is not in usedIndexList:
+			row = data[x]
+			row[ATTRITION_COLUMN_INDEX] = ""
+			testData.append(row)
+
+	return trainData, testData
 
 
 ## The starting point for this program's execution.
