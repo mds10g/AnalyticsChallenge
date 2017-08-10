@@ -3,7 +3,7 @@ from PIL import Image, ImageDraw
 
 
 
-# The results column in the data.
+# Constant column index values.
 ATTRITION_COLUMN_INDEX = 1
 EMPLOYEE_ID_COLUMN_INDEX = 9
 
@@ -21,8 +21,8 @@ class DecisionTreeNode:
 
 
 ## Recursively constructs the decision tree.
-# @param data	This is a list of rows containing attributes for a particular employee from the .csv file
-# @return		TO BE POPULATED
+# @param data This is a list of rows containing attributes for a particular employee from the .csv file
+# @return TO BE POPULATED
 def buildTree(data):
 	if len(data) == 0:
 		return DecisionTreeNode()
@@ -63,8 +63,8 @@ def buildTree(data):
 
 
 ## Classifies one observation (row) using the provided decision tree and returns the result.
-#  @param observation
-#  @param tree
+# @param observation TO BE POPULATED
+# @param tree TO BE POPULATED
 def classify(observation, tree):
 	if tree.results != None:
 		bestResult = None
@@ -87,18 +87,18 @@ def classify(observation, tree):
 
 
 ## Classifies each row in data using the provided decision tree.
-#  @param data
-#  @param tree
+# @param data TO BE POPULATED
+# @param tree TO BE POPULATED
 def classifyAll(data, tree):
 	for row in data:
 		print row[EMPLOYEE_ID_COLUMN_INDEX] + ", " + classify(row, tree)
 
 
 ## Partitions and returns a data set in two.
-# @param data			TO BE POPULATED
-# @param columnIndex	TO BE POPULATED
-# @param value			TO BE POPULATED
-# @return				TO BE POPULATED
+# @param data TO BE POPULATED
+# @param columnIndex TO BE POPULATED
+# @param value TO BE POPULATED
+# @return TO BE POPULATED
 def divideSet(data, columnIndex, value):
 	# Create a function that partitions a row into the left set (true) or the right set (false).
 	splitFunction = None
@@ -114,11 +114,11 @@ def divideSet(data, columnIndex, value):
 
 
 ## Draws the current node in the tree.
-# @param draw		TO BE POPULATED
-# @param headers	TO BE POPULATED
-# @param tree		TO BE POPULATED
-# @param x			TO BE POPULATED
-# @param y			TO BE POPULATED
+# @param draw TO BE POPULATED
+# @param headers TO BE POPULATED
+# @param tree TO BE POPULATED
+# @param x TO BE POPULATED
+# @param y TO BE POPULATED
 def drawNode(draw, headers, tree, x, y):
 	if tree.results == None:
 		# Get the width of each branch.
@@ -148,22 +148,23 @@ def drawNode(draw, headers, tree, x, y):
 		draw.text((x - 20, y), leafText, (0, 0, 0))
 
 
-## Draws the tree to "DecisionTree.png".
-# @param tree		TO BE POPULATED
-# @param headers	TO BE POPULATED
-def drawTree(tree, headers):
+## Draws the tree to fileName.png.
+# @param tree TO BE POPULATED
+# @param headers TO BE POPULATED
+# @param fileName TO BE POPULATED
+def drawTree(tree, headers, fileName):
 	width = 100 * getWidth(tree)
 	height = 100 * getHeight(tree) + 220
 
 	image = Image.new("RGB", (width, height), (255, 255, 255))
 	draw = ImageDraw.Draw(image)
 	drawNode(draw, headers, tree, width / 2, 20)
-	image.save("DecisionTree.png", "PNG")
+	image.save(fileName + ".png", "PNG")
 
 
 ## Calculates how different outcomes are from each other.
-# @param data	TO BE POPULATED
-# @return		TO BE POPULATED
+# @param data TO BE POPULATED
+# @return TO BE POPULATED
 def entropy(data):
 	logBase2 = lambda x : math.log(x) / math.log(2)
 	results = uniqueCounts(data)
@@ -176,8 +177,8 @@ def entropy(data):
 
 
 ## Calculates the height (depth) of the tree.
-# @param tree		TO BE POPULATED
-# @return
+# @param tree TO BE POPULATED
+# @return TO BE POPULATED
 def getHeight(tree):
 	if tree.leftChild == None and tree.rightChild == None:
 		return 0
@@ -186,8 +187,8 @@ def getHeight(tree):
 
 
 ## Calculates the number of leaves in the tree.
-# @param tree		TO BE POPULATED
-# @return
+# @param tree TO BE POPULATED
+# @return TO BE POPULATED
 def getWidth(tree):
 	if tree.leftChild == None and tree.rightChild == None:
 		return 1
@@ -196,8 +197,8 @@ def getWidth(tree):
 
 
 ## Returns True if x is a number and False otherwise.
-# @param x		TO BE POPULATED
-# @return
+# @param x TO BE POPULATED
+# @return TO BE POPULATED
 def isNumber(x):
 	try:
 		float(x)
@@ -207,8 +208,8 @@ def isNumber(x):
 
 
 ## Loads and returns CSV data from the provided file path.
-# @param filePath		TO BE POPULATED
-# @return				TO BE POPULATED
+# @param filePath TO BE POPULATED
+# @return TO BE POPULATED
 def loadCSVData(filePath):
 	csvFile = open(filePath, 'rb')
 	reader = csv.reader(csvFile)
@@ -220,12 +221,39 @@ def loadCSVData(filePath):
 	return data[0], data[1:]
 
 
-def prune:
+## Removes superfluous nodes in the tree to reduce overfitting.
+# @param tree TO BE POPULATED
+# @param minimumGain TO BE POPULATED
+def prune(tree, minimumGain):
+	# If the branches are not leaves, prune them.
+	if tree.leftChild.results == None:
+		prune(tree.leftChild, minimumGain)
+	if tree.rightChild.results == None:
+		prune(tree.rightChild, minimumGain)
+
+	# If the subbranches are now leaves, see if they should be merged.
+	if tree.leftChild.results != None and tree.rightChild.results != None:
+		# Build a combined dataset.
+		left = []
+		for value, count in tree.leftChild.results.items():
+			left += [[value]] * count
+		right = []
+		for value, count in tree.rightChild.results.items():
+			left += [[value]] * count
+
+		# Test the reduction in entropy.
+		delta = entropy(left + right) - (entropy(left) + entropy(right) / 2) # Should both be divided by two?!?
+		if delta < minimumGain:
+			# Merge the branches
+			tree.leftChild = None
+			tree.rightChild = None
+			tree.results = uniqueCounts(left + right)
+
 
 
 ## Computes how mixed the set is and returns the results.
-# @param data		TO BE POPULATED
-# @return
+# @param data TO BE POPULATED
+# @return TO BE POPULATED
 def uniqueCounts(dataSet):
 	results = {}
 	for row in dataSet:
@@ -244,8 +272,13 @@ if __name__ == "__main__":
 	else:
 		(headers, data) = loadCSVData(sys.argv[1])
 		tree = buildTree(data)
+		drawTree(tree, headers, "UnprunedDecisionTree")
 
 		(testHeaders, testData) = loadCSVData(sys.argv[2])
 		classifyAll(testData, tree)
 
-		drawTree(tree, headers)
+		prune(tree, 0.25)
+		drawTree(tree, headers, "PrunedDecisionTree")
+
+		(testHeaders, testData) = loadCSVData(sys.argv[2])
+		classifyAll(testData, tree)
