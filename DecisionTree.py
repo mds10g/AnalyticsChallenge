@@ -240,7 +240,7 @@ def prune(tree, minimumGain):
 		right = []
 		for value, count in tree.rightChild.results.items():
 			left += [[value]] * count
-
+		print str(left) + " | " + str(right)
 		# Test the reduction in entropy.
 		delta = entropy(left + right) - (entropy(left) + entropy(right) / 2) # Should both be divided by two?!?
 		if delta < minimumGain:
