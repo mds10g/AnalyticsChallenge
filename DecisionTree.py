@@ -2,8 +2,10 @@ import sys, csv, math
 from PIL import Image, ImageDraw
 
 
+
 # The results column in the data.
 ATTRITION_COLUMN_INDEX = 1
+EMPLOYEE_ID_COLUMN_INDEX = 8
 
 
 ## A node in the decision tree.
@@ -34,19 +36,17 @@ def buildTree(data):
 		for columnIndex in range(0, len(data[0])):
 			if columnIndex != ATTRITION_COLUMN_INDEX:
 				# Partition the data by this column.
-				columnValues = {}
-
-				###WHAT IS THIS DOING?!? It appears to make indexes in columnValues based on the value in the columnIndex of different rows. Then sets these values to 1
+				columnValues = []
 				for row in data:
-					columnValues[row[columnIndex]] = 1
+					columnValues.append(row[columnIndex])
 
-				for value in columnValues.keys():
+				for value in columnValues:
 					# Divide the set.
 					(set1, set2) = divideSet(data, columnIndex, value)
 
 					# Compute the information gain.
-					p = float(len(set1)) / float(len(data))
-					informationGain = currentScore - p * entropy(set1) - (1.0 - p) * entropy(set2)
+					ratio = float(len(set1)) / float(len(data))
+					informationGain = currentScore - ratio * entropy(set1) - (1.0 - ratio) * entropy(set2)
 					if informationGain > bestInformationGain and len(set1) > 0 and len(set2) > 0:
 						bestInformationGain = informationGain
 						bestCriteria = (columnIndex, value)
@@ -59,6 +59,28 @@ def buildTree(data):
 			return DecisionTreeNode(bestCriteria[0], bestCriteria[1], None, leftChild, rightChild)
 		else:
 			return DecisionTreeNode(results = uniqueCounts(data))
+
+
+def classify(observation, tree):
+	if tree.results != None:
+		return tree.results
+	else:
+		value = observation[tree.columnIndex]
+		if isNumber(value):
+			if float(value) >= tree.value:
+				return classify(observation, tree.leftChild)
+			else:
+				return classify(observation, tree.rightChild)
+		else:
+			if value == tree.value:
+				return classify(observation, tree.leftChild)
+			else:
+				return classify(observation, tree.rightChild)
+
+
+def classifyAll(data, tree):
+	for row in data:
+		print row[EMPLOYEE_ID_COLUMN_INDEX] + " " + str(classify(row, tree))
 
 
 ## Partitions and returns a data set in two.
@@ -136,9 +158,9 @@ def entropy(data):
 	results = uniqueCounts(data)
 
 	entropy = 0.0
-	for row in results.keys():
-		frequency = float(results[row]) / float(len(data))
-		entropy = entropy - frequency * logBase2(frequency)
+	for result in results.keys():
+		resultRatio = float(results[result]) / float(len(data))
+		entropy = entropy - resultRatio * logBase2(resultRatio)
 	return entropy
 
 
@@ -190,22 +212,26 @@ def loadCSVData(filePath):
 ## Computes how mixed the set is and returns the results.
 # @param data		TO BE POPULATED
 # @return
-def uniqueCounts(data):
+def uniqueCounts(dataSet):
 	results = {}
-	for row in data:
-		isAttrition = row[ATTRITION_COLUMN_INDEX]
-		if isAttrition not in results:
-			results[isAttrition] = 0
-		results[isAttrition] += 1
+	for row in dataSet:
+		attritionValue = row[ATTRITION_COLUMN_INDEX]
+		if attritionValue not in results:
+			results[attritionValue] = 0
+		results[attritionValue] += 1
 	return results
 
 
 
 ## The starting point for this program's execution.
 if __name__ == "__main__":
-	if len(sys.argv) != 2:
-		print "Usage: python decisiontree.py <csv file>"
+	if len(sys.argv) != 3:
+		print "Usage: python DecisionTree.py <train csv file> <test csv file>"
 	else:
 		(headers, data) = loadCSVData(sys.argv[1])
 		tree = buildTree(data)
+
+		(testHeaders, testData) = loadCSVData(sys.argv[2])
+		classifyAll(testData, tree)
+
 		drawTree(tree, headers)
