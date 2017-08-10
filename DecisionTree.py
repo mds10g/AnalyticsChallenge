@@ -270,20 +270,29 @@ def uniqueCounts(dataSet):
 # @return					Returns the training and test data sets
 def splitData(data, percentTrain):
 	numRows = int(float(len(data[0])) * (percentTrain / 100.0))
+    indexList = []
 	usedIndexList = [-1]
 	trainData = []
 	testData = []
 	index = -1
 
+    #Generate a list containing all available indexes
+    for x in range(0, len(data[0])):
+        indexList.append(x)
+
+    #Shuffle the list of indexes
+    random.shuffle(indexList)
+
+    #Take the desired number of random indexes for training data
 	for x in range(0, numRows):
-		while index is in usedIndexList:
-			index = random.randint(0,len(data[0])-1)
-
+        #Gets the random index from the indexList and append it to the usedIndexList
+        index = indexList[x]
 		usedIndexList.append(index)
-
-		trainData.append(data[index])
+        #Append the random row to the training data
+		trainData.append(index)
 		x += 1
 
+    #Append all other rows to the testData
 	for x in range(0, len(data[0])):
 		if x is not in usedIndexList:
 			row = data[x]
