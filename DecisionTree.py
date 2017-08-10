@@ -5,7 +5,8 @@ from PIL import Image, ImageDraw
 
 # The results column in the data.
 ATTRITION_COLUMN_INDEX = 1
-EMPLOYEE_ID_COLUMN_INDEX = 8
+EMPLOYEE_ID_COLUMN_INDEX = 9
+
 
 
 ## A node in the decision tree.
@@ -61,9 +62,16 @@ def buildTree(data):
 			return DecisionTreeNode(results = uniqueCounts(data))
 
 
+## Classifies one observation (row) using the provided decision tree and returns the result.
+#  @param observation
+#  @param tree
 def classify(observation, tree):
 	if tree.results != None:
-		return tree.results
+		bestResult = None
+		for result in tree.results:
+			if bestResult == None or tree.results[result] > bestResult:
+				bestResult = result
+		return result
 	else:
 		value = observation[tree.columnIndex]
 		if isNumber(value):
@@ -78,9 +86,12 @@ def classify(observation, tree):
 				return classify(observation, tree.rightChild)
 
 
+## Classifies each row in data using the provided decision tree.
+#  @param data
+#  @param tree
 def classifyAll(data, tree):
 	for row in data:
-		print row[EMPLOYEE_ID_COLUMN_INDEX] + " " + str(classify(row, tree))
+		print row[EMPLOYEE_ID_COLUMN_INDEX] + ", " + classify(row, tree)
 
 
 ## Partitions and returns a data set in two.
@@ -207,6 +218,9 @@ def loadCSVData(filePath):
 		for column in row:
 			data[len(data) - 1].append(column);
 	return data[0], data[1:]
+
+
+def prune:
 
 
 ## Computes how mixed the set is and returns the results.
