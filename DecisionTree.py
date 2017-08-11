@@ -69,9 +69,9 @@ def classify(observation, tree):
 	if tree.results != None:
 		bestResult = None
 		for result in tree.results:
-			if bestResult == None or tree.results[result] > bestResult:
+			if bestResult == None or result > bestResult:
 				bestResult = result
-		return result
+		return bestResult
 	else:
 		value = observation[tree.columnIndex]
 		if isNumber(value):
@@ -91,7 +91,8 @@ def classify(observation, tree):
 # @param tree TO BE POPULATED
 def classifyAll(data, tree):
 	for row in data:
-		print row[EMPLOYEE_ID_COLUMN_INDEX] + ", " + classify(row, tree)
+		result = classify(row, tree)
+		print row[EMPLOYEE_ID_COLUMN_INDEX] + ", " + result
 
 
 ## Partitions and returns a data set in two.
@@ -164,10 +165,11 @@ def drawTree(tree, headers, fileName):
 
 ## Calculates how different outcomes are from each other.
 # @param data TO BE POPULATED
+# @param resultsColumnIndex TO BE POPULATED
 # @return TO BE POPULATED
-def entropy(data):
+def entropy(data, resultsColumnIndex = ATTRITION_COLUMN_INDEX):
 	logBase2 = lambda x : math.log(x) / math.log(2)
-	results = uniqueCounts(data)
+	results = uniqueCounts(data, resultsColumnIndex)
 
 	entropy = 0.0
 	for result in results.keys():
@@ -239,83 +241,87 @@ def prune(tree, minimumGain):
 			left += [[value]] * count
 		right = []
 		for value, count in tree.rightChild.results.items():
-			left += [[value]] * count
-		print str(left) + " | " + str(right)
+			right += [[value]] * count
+
 		# Test the reduction in entropy.
-		delta = entropy(left + right) - (entropy(left) + entropy(right) / 2) # Should both be divided by two?!?
+		delta = entropy(left + right, 0) - ((entropy(left, 0) + entropy(right, 0)) / 2)
 		if delta < minimumGain:
 			# Merge the branches
 			tree.leftChild = None
 			tree.rightChild = None
-			tree.results = uniqueCounts(left + right)
+			tree.results = uniqueCounts(left + right, 0)
 
+
+## This function takes in a data set and splits it into a trainData set and a testData set based
+# @param data This is the data set
+# @param percentTrain This is the percentage of the data set to use in the trainData set
+# @return Returns the training and test data sets
+def splitData(data, percentTrain):
+	numRows = int(float(len(data)) * (percentTrain / 100.0))
+	indexList = []
+	trainData = []
+	testData = []
+
+	# Generate a list containing all available indexes
+	for x in range(0, len(data)):
+		indexList.append(x)
+
+	# Shuffle the list of indexes
+	#random.shuffle(indexList)
+
+	# Take the desired number of random indexes for training data
+	for x in range(0, numRows):
+		# Gets the random index from the indexList and append it to the usedIndexList
+		index = indexList[x]
+		# Append the random row to the training data
+		trainData.append(data[index])
+
+	# Append all other rows to the testData
+	for x in range(numRows, len(data)):
+		index = indexList[x]
+		row = data[index]
+		row[ATTRITION_COLUMN_INDEX] = ""
+		testData.append(row)
+
+	return trainData, testData
 
 
 ## Computes how mixed the set is and returns the results.
 # @param data TO BE POPULATED
+# @param resultsColumnIndex TO BE POPULATED
 # @return TO BE POPULATED
-def uniqueCounts(dataSet):
+def uniqueCounts(dataSet, resultsColumnIndex = ATTRITION_COLUMN_INDEX):
 	results = {}
 	for row in dataSet:
-		attritionValue = row[ATTRITION_COLUMN_INDEX]
+		attritionValue = row[resultsColumnIndex]
 		if attritionValue not in results:
 			results[attritionValue] = 0
 		results[attritionValue] += 1
 	return results
 
 
-##This function takes in a data set and splits it into a trainData set and a testData set based
-# @param data				This is the data set
-# @param percentTrain		This is the percentage of the data set to use in the trainData set
-# @return					Returns the training and test data sets
-def splitData(data, percentTrain):
-	numRows = int(float(len(data[0])) * (percentTrain / 100.0))
-    indexList = []
-	usedIndexList = [-1]
-	trainData = []
-	testData = []
-	index = -1
-
-    #Generate a list containing all available indexes
-    for x in range(0, len(data[0])):
-        indexList.append(x)
-
-    #Shuffle the list of indexes
-    random.shuffle(indexList)
-
-    #Take the desired number of random indexes for training data
-	for x in range(0, numRows):
-        #Gets the random index from the indexList and append it to the usedIndexList
-        index = indexList[x]
-		usedIndexList.append(index)
-        #Append the random row to the training data
-		trainData.append(index)
-		x += 1
-
-    #Append all other rows to the testData
-	for x in range(0, len(data[0])):
-		if x is not in usedIndexList:
-			row = data[x]
-			row[ATTRITION_COLUMN_INDEX] = ""
-			testData.append(row)
-
-	return trainData, testData
-
 
 ## The starting point for this program's execution.
 if __name__ == "__main__":
-	if len(sys.argv) != 3:
-		print "Usage: python DecisionTree.py <train csv file> <test csv file>"
+	if len(sys.argv) != 2:
+		print "Usage: python DecisionTree.py <train csv file>"
 	else:
+		print "Training decision tree..."
 		(headers, data) = loadCSVData(sys.argv[1])
-		tree = buildTree(data)
+		trainData, testData = splitData(data, 75)
+		tree = buildTree(trainData)
+
+		print "Drawing tree..."
 		drawTree(tree, headers, "UnprunedDecisionTree")
 
-		(testHeaders, testData) = loadCSVData(sys.argv[2])
+		print "Testing decision tree..."
 		classifyAll(testData, tree)
 
+		print "Pruning decision tree..."
 		prune(tree, 0.25)
+
+		print "Drawing tree..."
 		drawTree(tree, headers, "PrunedDecisionTree")
 
-		(testHeaders, testData) = loadCSVData(sys.argv[2])
+		print "Testing decision tree..."
 		classifyAll(testData, tree)
