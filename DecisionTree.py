@@ -90,9 +90,13 @@ def classify(observation, tree):
 # @param data TO BE POPULATED
 # @param tree TO BE POPULATED
 def classifyAll(data, tree):
+	totalCorrect = 0
 	for row in data:
 		result = classify(row, tree)
-		print row[EMPLOYEE_ID_COLUMN_INDEX] + ", " + result
+		isCorrect = result == row[ATTRITION_COLUMN_INDEX]
+		totalCorrect += isCorrect
+		print row[EMPLOYEE_ID_COLUMN_INDEX] + ", " + result + ", " + str(isCorrect)
+	print float(totalCorrect) / float(len(data))
 
 
 ## Partitions and returns a data set in two.
@@ -267,7 +271,7 @@ def splitData(data, percentTrain):
 		indexList.append(x)
 
 	# Shuffle the list of indexes
-	#random.shuffle(indexList)
+	random.shuffle(indexList)
 
 	# Take the desired number of random indexes for training data
 	for x in range(0, numRows):
@@ -280,7 +284,6 @@ def splitData(data, percentTrain):
 	for x in range(numRows, len(data)):
 		index = indexList[x]
 		row = data[index]
-		row[ATTRITION_COLUMN_INDEX] = ""
 		testData.append(row)
 
 	return trainData, testData
@@ -318,7 +321,7 @@ if __name__ == "__main__":
 		classifyAll(testData, tree)
 
 		print "Pruning decision tree..."
-		prune(tree, 0.25)
+		prune(tree, 0.1)
 
 		print "Drawing tree..."
 		drawTree(tree, headers, "PrunedDecisionTree")
