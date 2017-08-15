@@ -87,16 +87,19 @@ def classify(observation, tree):
 
 
 ## Classifies each row in data using the provided decision tree.
-# @param data TO BE POPULATED
 # @param tree TO BE POPULATED
-def classifyAll(data, tree):
+# @param data TO BE POPULATED
+# @param outputFilePath TO BE POPULATED
+def classifyAll(tree, data, outputFilePath):
 	totalCorrect = 0
+	outputFile = open(outputFilePath, "w")
+	outputFile.write("EmployeeNumber,Attrition\r\n")
 	for row in data:
 		result = classify(row, tree)
 		isCorrect = result == row[ATTRITION_COLUMN_INDEX]
+		outputFile.write(row[EMPLOYEE_ID_COLUMN_INDEX] + ", " + result + "\r\n")
 		totalCorrect += isCorrect
-		print row[EMPLOYEE_ID_COLUMN_INDEX] + ", " + result + ", " + str(isCorrect)
-	print float(totalCorrect) / float(len(data))
+	print "Score: " + str(float(totalCorrect) / float(len(data)))
 
 
 ## Partitions and returns a data set in two.
@@ -306,25 +309,27 @@ def uniqueCounts(dataSet, resultsColumnIndex = ATTRITION_COLUMN_INDEX):
 
 ## The starting point for this program's execution.
 if __name__ == "__main__":
-	if len(sys.argv) != 2:
-		print "Usage: python DecisionTree.py <train csv file>"
-	else:
-		print "Training decision tree..."
-		(headers, data) = loadCSVData(sys.argv[1])
-		trainData, testData = splitData(data, 75)
+	if len(sys.argv) == 6:
+		print "Training decision tree with " + sys.argv[2] + "..."
+		headers, trainData = loadCSVData(sys.argv[2])
+		testData = None
+
+		if sys.argv[1] == "--train":
+			trainData, testData = splitData(trainData, float(sys.argv[3]))
+		elif sys.argv[1] == "--test":
+			testHeaders, testData = loadCSVData(sys.argv[3])
+
 		tree = buildTree(trainData)
 
-		print "Drawing tree..."
-		drawTree(tree, headers, "UnprunedDecisionTree")
-
-		print "Testing decision tree..."
-		classifyAll(testData, tree)
-
-		print "Pruning decision tree..."
-		prune(tree, 0.1)
+		print "Pruning decision tree with " + sys.argv[4] + "..."
+		prune(tree, float(sys.argv[4]))
 
 		print "Drawing tree..."
-		drawTree(tree, headers, "PrunedDecisionTree")
+		drawTree(tree, headers, "DecisionTree")
 
-		print "Testing decision tree..."
-		classifyAll(testData, tree)
+		print "Testing decision tree with " + str(sys.argv[5]) + "..."
+		classifyAll(tree, testData, sys.argv[5])
+
+	else:
+		print "Usage: python DecisionTree.py --train <train csv file> <train percent> <prune factor> <output file path>"
+		print "Usage: python DecisionTree.py --test <train csv file> <test csv file> <prune factor> <output file path>"
